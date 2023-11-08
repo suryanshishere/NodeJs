@@ -1,0 +1,16 @@
+[
+    {
+        "title": "Rick Dad Poor Dad",
+        "imageUrl": "https://m.media-amazon.com/images/I/51AHZGhzZEL.jpg",
+        "description": "financial book",
+        "price": "200",
+        "id": "10"
+    },
+    {
+        "title": "Another Product",
+        "imageUrl": "https://m.media-amazon.com/images/I/51AHZGhzZEL.jpg",
+        "description": "dasfsd",
+        "price": "400",
+        "id": "0.7105322949982484"
+    }
+]

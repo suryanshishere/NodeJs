@@ -1,0 +1,15 @@
+{
+  "name": "basic",
+  "version": "1.0.0",
+  "description": "Just working on basic of nodejs ",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
