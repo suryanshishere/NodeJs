@@ -15,7 +15,7 @@ const MONGODB_URI =
   'mongodb+srv://th1nkers:dsGFVZpKtU1xU0gK@cluster0.rf7ldel.mongodb.net/shop';
 
 const app = express();
-const store = new MongoDBStore({
+const store = MongoDBStore.create({
   mongoUrl: MONGODB_URI,
   collection: 'sessions'
 });

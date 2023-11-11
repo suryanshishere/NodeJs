@@ -1,72 +1,79 @@
-// Importing required modules
 const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf');
 const flash = require('connect-flash');
+const multer = require('multer');
 
-// Importing controllers and models
 const errorController = require('./controllers/error');
 const User = require('./models/user');
 
-// MongoDB connection URI
-const MONGODB_URI = 'mongodb+srv://th1nkers:dsGFVZpKtU1xU0gK@cluster0.rf7ldel.mongodb.net/shop';
+const MONGODB_URI = 'mongodb+srv://th1nkers:KduxRf0PHaGhx7gf@cluster0.rf7ldel.mongodb.net/shop';
 
-// Creating Express app
 const app = express();
-
-// Creating a MongoDB session store
-const store = MongoStore.create({
-  mongoUrl: MONGODB_URI,
+const store = MongoDBStore({
+  uri: MONGODB_URI,
   collection: 'sessions'
 });
-
-// Setting up CSRF protection
 const csrfProtection = csrf();
 
-// Configuring the Express app
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'images');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = new Date().toISOString().replace(/:/g, '-');
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/jpg' ||
+    file.mimetype === 'image/jpeg'
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
-// Importing route handlers
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
-// Middleware for parsing request body
 app.use(bodyParser.urlencoded({ extended: false }));
-
-// Serving static files
+app.use(multer({ storage: fileStorage, fileFilter: fileFilter }).single('image'));
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Configuring session management
+app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use(
   session({
-    secret: 'th1nkers',
+    secret: 'my secret',
     resave: false,
     saveUninitialized: false,
     store: store
   })
 );
-
-// Adding CSRF protection to the app
 app.use(csrfProtection);
-
-// Adding flash messages support
 app.use(flash());
 
-// Middleware for setting local variables
 app.use((req, res, next) => {
   res.locals.isAuthenticated = req.session.isLoggedIn;
   res.locals.csrfToken = req.csrfToken();
   next();
 });
 
-// Middleware for checking and setting user information
 app.use((req, res, next) => {
+  if (!req.session.user) {
+    return next();
+  }
   User.findById(req.session.user._id)
     .then(user => {
       if (!user) {
@@ -80,21 +87,22 @@ app.use((req, res, next) => {
     });
 });
 
-// Routing configuration
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
-// Error handling routes
 app.get('/500', errorController.get500);
+
 app.use(errorController.get404);
 
-// Global error handling middleware
-app.use((error, req, res, next) => {
-  res.redirect('/500');
-});
+/* app.use((error, req, res, next) => {
+  res.status(500).render('500', {
+    pageTitle: 'Error!',
+    path: '/500',
+    isAuthenticated: req.session.isLoggedIn
+  });
+}); */
 
-// Connecting to MongoDB and starting the server
 mongoose
   .connect(MONGODB_URI)
   .then(result => {
